@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
-from .models import Evento
 from django.urls import reverse
+from django.http import Http404
+from .models import Evento
 from django.contrib import messages
 from django.contrib.messages import constants
+from django.http import HttpResponse
+import csv
 
 # Create your views here.
 @login_required
@@ -71,3 +73,21 @@ def inscrever_evento(request, id):
 	# evento = Evento.objects.filter(id=id).first()
 	# evento = Evento.objects.get
 	# print(evento.data_inicio)
+
+def participantes_evento(request, id):
+	evento = get_object_or_404(Evento, id=id)	
+	if not evento.criador == request.user:
+		raise Http404('Esse evento não é seu')
+	
+	if request.method == "GET":
+		participantes = evento.participantes.all()
+		return render(request, 'participantes_evento.html', {'participantes':participantes, 'evento':evento})
+	
+def gerar_csv(request, id):
+	evento = get_object_or_404(Evento, id=id)	
+	if not evento.criador == request.user:
+		raise Http404('Esse evento não é seu')
+	
+	participantes = evento.participantes.all()
+	
+	return HttpResponse(participantes)
